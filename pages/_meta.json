@@ -1,18 +1,10 @@
 {
-  "index": "Introduction",
-  "commit": "Commit Message",
-  "styling": "Styling",
-  "react": "React",
-  "github": "GitHub",
-  "libraries": "Libraries",
-  "extension": "VSCode Extensions",
-  "mac": "Mac Setup",
-  "uncategorized": "Uncategorized Notes",
-  "attribution": "Attribution",
-  "contact": {
-    "title": "Contact ↗",
-    "type": "page",
-    "href": "https://clarence.link",
-    "newWindow": true
+  "index": {
+    "title": "Home",
+    "type": "page"
+  },
+  "server": {
+    "title": "Server",
+    "type": "page"
   }
 }

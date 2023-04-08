@@ -1,0 +1,29 @@
+{
+  "*": {
+    "theme": {
+      "footer": false
+    }
+  },
+  "index": "Introduction",
+  "-- Initial Configuration": {
+    "type": "separator",
+    "title": "Initial Configuration"
+  },
+  "sudo-without-password": "Sudo without Password",
+  "network-management": "Change Network Management",
+  "dns-management": "Change DNS Permanent",
+  "-- Server Configuration": {
+    "type": "separator",
+    "title": "Server Configuration"
+  },
+  "dns": "DNS Server",
+  "ca": "CA Server",
+  "ftp": "FTP Server",
+  "db": "Database Server",
+  "mail": "Mail Server",
+  "monitoring": "Monitoring Server",
+  "app": "App Server",
+  "loadbalancer": "Loadbalancer Server",
+  "jenkins": "Jenkins Server",
+  "prod": "Production Server"
+}
