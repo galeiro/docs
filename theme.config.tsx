@@ -19,7 +19,7 @@ const config: DocsThemeConfig = {
     </>
   ),
   project: {
-    link: 'https://github.com/galeiro/galeiro-docs',
+    link: 'https://github.com/galeiro/docs',
   },
   // chat: {
   //   link: 'https://twitter.com/th_clarence',
@@ -53,7 +53,7 @@ const config: DocsThemeConfig = {
   nextThemes: {
     defaultTheme: "dark",
   },
-  docsRepositoryBase: 'https://github.com/galeiro/galeiro-docs',
+  docsRepositoryBase: 'https://github.com/galeiro/docs',
   footer: {
     text: (
       <p>
