@@ -1,5 +1,5 @@
 # Ganti Network Management
-Karena kita menggunakan ubuntu, maka kita akan mengubah Network Management bawaan ubuntu yaitu `netplan` menjadi `ifupdown`. Kita menggunakan Network Management `ifupdown` karena mudah diaplikasikan.
+Karena kita menggunakan ubuntu, maka kita akan mengubah Network Management bawaan ubuntu yaitu **netplan** menjadi **ifupdown**. Kita menggunakan Network Management **ifupdown** karena mudah diaplikasikan.
 
 ## Install Ifupdown
 Install ifupdown.
@@ -7,7 +7,7 @@ Install ifupdown.
 sudo apt-get install ifupdown
 ```
 
-Tambah konfigurasi di `/etc/network/interfaces` seperti berikut:
+Tambah konfigurasi di **/etc/network/interfaces** seperti berikut:
 ``` sh filename="/etc/network/interfaces"
 #Konfigurasi loopback
 auto lo
@@ -37,7 +37,7 @@ sudo systemctl restart networking
 ```
 
 ## Hapus Netplan
-Sekarang kita akan menghapus Network Management lama yaitu `netplan`.
+Sekarang kita akan menghapus Network Management lama yaitu **netplan**.
 ``` sh
 sudo systemctl stop systemd-networkd.socket systemd-networkd networkd-dispatcher systemd-networkd-wait-online
 ```

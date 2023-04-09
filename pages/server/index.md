@@ -1,4 +1,4 @@
-# Servers Documentation
+# Server Documentation
 
 This site will be personal documentation about my practices.
 

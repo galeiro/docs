@@ -49,6 +49,10 @@ const config: DocsThemeConfig = {
     prev: false,
     next: false
   },
+  darkMode: true,
+  nextThemes: {
+    defaultTheme: "dark",
+  },
   docsRepositoryBase: 'https://github.com/galeiro/galeiro-docs',
   footer: {
     text: (

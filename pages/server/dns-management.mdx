@@ -1,5 +1,5 @@
-# Ganti DNS Permanents
-Konfigurasi berikut adalah cara untuk mengganti DNS secara permanent, karena jika kita mengganti DNS dengan cara `sudo nano /etc/resolv.conf` maka ketika mesin server kita mati DNS secara otomatis akan balik ke DNS provider.
+# Ganti DNS Permanent
+Konfigurasi berikut adalah cara untuk mengganti DNS secara permanent, karena jika kita mengganti DNS dengan cara **sudo nano /etc/resolv.conf** maka ketika mesin server kita mati DNS secara otomatis akan balik ke DNS provider.
 
 ## Install Resolvconf
 ``` bash
@@ -17,12 +17,12 @@ sudo systemctl status resolvconf
 ``` bash
 sudo resolvconf --enable-updates
 ```
-Tambah konfigurasi di `/etc/resolvconf/resolv.conf.d/head` seperti berikut:
+Tambah konfigurasi di **/etc/resolvconf/resolv.conf.d/head** seperti berikut:
 ``` bash filename="/etc/resolvconf/resolv.conf.d/head"
 nameservers 8.8.8.8
 ```
 
-Jika sudah maka tinggal update `resolvconf` agar konfigurasi berjalan.
+Jika sudah maka tinggal update **resolvconf** agar konfigurasi berjalan.
 ``` bash 
 sudo resolvconf -u	
 ```
