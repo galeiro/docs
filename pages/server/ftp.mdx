@@ -1,0 +1,106 @@
+# Konfigurasi FTP Server
+
+Konfigurasi File Server kita akan menggunakan aplikasi service **samba**.
+
+## Install Samba
+Kita akan melakukan installasi **samba-server**.
+``` sh
+sudo apt install samba-server
+```
+
+## Konfigurasi User
+Dalam **samba**, user yang terdaftar di **samba** juga harus terdaftar di **/etc/passwd**. Dengan kata lain user samba adalah user server kita juga. Asumsikan kita sudah punya user **galih**. Sekarang tinggal membuat **galih** menjadi user samba.
+``` sh
+sudo smbpasswd -a galih
+```
+
+## Konfigurasi Samba
+Kita akan men-konfigurasi-kan samba server kita untuk bisa menerima 2 role user, yakni user yang sudah terdaftar dan user guest. Seluruh konfigurasi samba server terletak di path **/etc/samba/smb.conf**.
+
+### User Terdaftar
+Kita akan membuat konfigurasi untuk user-user yang memang sudah terdaftar di server kita. Tambahkan konfigurasi dalam **/etc/samba/smb.conf** seperti berikut:
+``` sh filename="/etc/samba/smb.conf"
+[homes]
+   comment = Home Directories
+   browseable = yes
+   read only = no
+   create mask = 0700
+   directory mask = 0700
+   valid users = %S
+```
+### User Guest
+Sekarang melakukan konfigurasi untuk user tamu, sebelum kita konfigurasi samba nya kita akan membuat folder terlebih dahulu untuk folder para tamu nanti.
+``` bash
+sudo mkdir /var/samba
+```
+``` bash
+sudo chmod 777 /var/samba/
+```
+Jika sudah kita akan tambah konfigurasi di **/etc/samba/smb.conf**.
+
+``` sh filename="/etc/samba/smb.conf"
+[public]
+  comment = Public Folder
+  path = /var/samba/
+  browsable =yes
+  create mask = 0660
+  directory mask = 0771
+  writable = yes
+  guest ok = yes
+```
+Jika sudah maka kurang lebih untuk tampilan seluruh konfigurasi **/etc/samba/smb.conf** adalah sebagai berikut:
+``` sh filename="/etc/samba/smb.conf"
+[global]
+   workgroup = WORKGROUP
+   server string = %h server (Samba, Ubuntu)
+   log file = /var/log/samba/log.%m
+   max log size = 1000
+   logging = file
+   panic action = /usr/share/samba/panic-action %d
+   server role = standalone server
+   obey pam restrictions = yes
+   unix password sync = yes
+   passwd program = /usr/bin/passwd %u
+   passwd chat = *Enter\snew\s*\spassword:* %n\n *Retype\snew\s*\spassword:* %n\n *password\supdated\ssuccessfully* .
+   pam password change = yes
+   map to guest = bad user
+   usershare allow guests = yes
+[printers]
+   comment = All Printers
+   browseable = no
+   path = /var/spool/samba
+   printable = yes
+   guest ok = no
+   read only = yes
+   create mask = 0700
+[print$]
+   comment = Printer Drivers
+   path = /var/lib/samba/printers
+   browseable = yes
+   read only = yes
+   guest ok = no
+[homes]
+   {==comment = Home Directories==}
+   {==browseable = yes==}
+   {==read only = no==}
+   {==create mask = 0700==}
+   {==directory mask = 0700==}
+   {==valid users = %S==}
+[public]
+   {==comment = Public Folder==}
+   {==path = /var/samba/==}
+   {==browsable =yes==}
+   {==create mask = 0660==}
+   {==directory mask = 0771==}
+   {==writable = yes==}
+   {==guest ok = yes==}
+```
+
+## Pengujian Service
+
+Untuk melakukan pengujian, maka kita akan restart samba-server terlebih dahulu.
+``` shell
+sudo systemctl restart smbd
+```
+
+Lalu kita hanya perlu tes didalam laptop kita dengan cara tambah network location, dan kita hanya perlu memasukkan domain kita **\\\ftp.myapp.com\\public** atau **\\\ftp.myapp.com\\galih**

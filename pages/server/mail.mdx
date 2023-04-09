@@ -1,0 +1,205 @@
+import { Callout } from 'nextra-theme-docs'
+
+# Konfigurasi Mail Server
+
+Membuat mail server memiliki tingkat kesulitan yang lebih tinggi jika dibandingkan dengan server lain. Hal tersebut dikarenakan mail server memiliki banyak komponen yang harus dikonfigurasi. 
+
+Mail server memiliki 2 komponen penting agar dapat berjalan yaitu SMTP dan IMAP. SMTP berfungsi untuk mengirim e-mail antar server oleh karena itu SMTP juga disebut MTA (Mail Transfer Agent). Sedangkan IMAP berfungsi untuk mengambil e-mail dari server oleh user, IMAP biasa juga disebut MUA (Mail User Agent). Kita akan menggunakan software **Postfix** untuk SMTP dan software **Dovecot** untuk IMAP. Dan untuk user interface nya, kita akan menggunakan **Roundcube**.
+
+Selain 2 komponen tersebut nantinya kita juga akan install beberapa komponen lain agar e-mail kita dipercaya oleh server lain. Komponen tersebut adalah SPF dan DKIM dan SSL untuk enkripsi. Namun pada bab ini hanya meng-ssl-kan user interface nya saja.
+
+## Install Postfix
+
+Kita akan meng-install postfix untuk SMTP.
+``` sh
+sudo apt-get install postfix
+```
+Lalu muncul opsi installasi postfix, kita akan memilih Internet Site setelah itu kita diminta untuk memasukkan domain pada system mail name. Ini akan menjadi domain pada alamat e-mail yang biasanya berada di belakang simbol @ pada email. Misalnya alamat email saya adalah **galih@myapp.com** maka saya harus mengisinya dengan **myapp.com**.
+
+Lalu kita akan ubah lokasi **mailbox** pada **/etc/postfix/main.cf**. Buka dan tambahkan baris berikut dipaling bawah pada file tersebut.
+``` sh filename="/etc/postfix/main.cf"
+home_mailbox = Maildir/
+```
+
+Lalu sekarang kita akan melakukan konfigurasi ulang pada service postfix dengan perintah berikut.
+``` sh
+sudo dpkg-reconfigure postfix
+```
+Lalu akan ada prompt yang meminta mengisi Destination to accept email maka kita isi dengan myapp.com, dan ketika mengisi Local Network maka isi dengan 0.0.0.0/0, dan sisa nya hanya perlu Yes saja.
+
+## Install Dovecot
+Kita akan meng-install postfix untuk IMAP.
+``` sh
+sudo apt-get install dovecot-core dovecot-imapd 
+```
+
+Jika sudah maka kita akan konfigurasi dovecot nya. Kita akan melakukan konfigurasi penting pada file **/etc/dovecot/dovecot.conf**, **/etc/dovecot/conf.d/10-auth.conf**, dan **/etc/dovecot/conf.d/10-mail.conf**.
+
+Cari baris `listen` pada file **/etc/dovecot/dovecot.conf** dan ubah seperti berikut.
+``` sh filename="sudo nano /etc/dovecot/dovecot.conf"
+listen = *
+```
+
+Lalu cari baris `disable_plaintext_auth` pada file **/etc/dovecot/conf.d/10-auth.conf** dan ubah seperti berikut.
+``` sh filename="sudo nano /etc/dovecot/conf.d/10-auth.conf"
+disable_plaintext_auth = no
+```
+
+Lalu cari baris `mail_location` pada file **/etc/dovecot/conf.d/10-mail.conf** dan ubah seperti berikut.
+``` sh filename="/etc/dovecot/conf.d/10-mail.conf"
+mail_location = maildir:~/Maildir
+```
+
+Lalu aktifkan Maildir dovecot nya dengan perintah berikut:
+``` sh
+maildirmake.dovecot /etc/skel/Maildir/
+```
+
+## Membuat User
+User untuk mail server kita juga menggunakan user yang sama didalam server kita, maka untuk melakukan tes kita akan membuat user tes.
+``` sh
+sudo adduser galih
+```
+``` sh
+sudo adduser faiz
+```
+
+## Install Roundcube
+Kita akan meng-install roundcube untuk user interface mail server kita.
+``` sh
+sudo apt-get install roundcube 
+```
+
+Lalu konfigurasi roundcube pada file **/etc/roundcube/config.inc.php**. Defaultnya file tersebut belum ada, maka kita akan meng-copy-nya dari **/etc/roundcube/config.inc.sample.php**.
+``` sh
+sudo cp /etc/roundcube/config.inc.sample.php /etc/roundcube/config.inc.php
+```
+
+Lalu buka file tersebut kemudian cari baris dan sesuaikan dengan konfigurasi berikut:
+``` sh filename="/etc/roundcube/config.inc.php"
+$config['default_host'] = 'myapp.com';
+$config['smtp_server'] = 'localhost';
+$config['smtp_port'] = '25';
+$config['smtp_user'] = '';
+$config['smtp_pass'] = '';
+```
+
+## Install PHP
+Kita akan install PHP untuk menunjang webserver kita, karena untuk menjalankan roundcube membutuhkan PHP.
+``` sh
+sudo add-apt-repository ppa:ondrej/php
+```
+``` sh
+sudo apt-get update
+```
+``` sh
+sudo apt install php8.2-fpm php8.2-common php8.2-cli php8.2-mbstring php8.2-gd php8.2-intl php8.2-xml php8.2-mysql php8.2-zip php8.2-json
+```
+Pastikan bahwa PHP sudah terinstall.
+``` sh
+php -v
+```
+``` sh
+sudo systemctl status php8.2-fpm
+```
+
+## Install Nginx
+Lalu kita akan menginstall **nginx** untuk webserver nya.
+``` sh
+sudo apt-get update
+```
+``` sh
+sudo apt-get install nginx
+```
+
+### Konfigurasi Server Block
+Jika sudah kita tinggal melakukan konfigurasi webserver nginx agar ketika ada yang mengakses **mail.myapp.com** maka otomatis akan dibawa ke roundcube.
+
+Konfigurasi dan sesuaikan dengan script berikut:
+``` sh filename="/etc/nginx/conf.d/mail.conf"
+server {
+    listen 80;
+    server_name mail.myapp.com;
+    root /var/lib/roundcube/;
+    index index.php index.html;
+
+    location ~ \.php$ {
+        try_files $fastcgi_script_name =404;
+        include fastcgi_params;
+        fastcgi_pass  unix:/run/php/php8.2-fpm.sock;
+        fastcgi_index index.php;
+        fastcgi_param DOCUMENT_ROOT  $realpath_root;
+        fastcgi_param SCRIPT_FILENAME   $realpath_root$fastcgi_script_name; 
+    }
+
+    access_log /var/log/nginx/mail.access.log;
+    error_log /var/log/nginx/mail.error.log;
+}
+```
+
+<Callout type="warning" emoji="⚠️">
+    Ekstensi file konfigurasi server block didalam **/etc/nginx/conf.d/** harus **.conf**.
+</Callout>
+
+Jika sudah sekarang hanya perlu me-restart **nginx**.
+``` sh
+sudo systemctl restart nginx
+```
+Sekarang silahkan buka **http://mail.myapp.com** dan login dengan user yang sudah dibuat tadi. Dan untuk melakukan pengetesan silahkan kirim email dari galih ke faiz dan juga sebaliknya.
+
+### Konfigurasi SSL / HTTPS
+Agar web interface roundcube dapat diakses melalui https, maka kita juga akan melakukan konfigurasi ssl pada nginx nya.
+
+File yang perlu kita siapkan adalah:
+
+-   myapp.crt
+-   myapp.key
+
+Kita telah membuat 2 file tersebut, lalu simpan 2 file tersebut di **/home/ubuntu/ssl/**.
+
+Konfigurasi ulang dan sesuaikan dengan script berikut:
+``` sh filename="/etc/nginx/conf.d/mail.conf"
+server {
+    listen 443 ssl;
+    ssl_certificate /home/ubuntu/ssl/myapp.crt;
+    ssl_certificate_key /home/ubuntu/ssl/myapp.key;
+
+    server_name mail.myapp.com;
+    root /var/lib/roundcube/;
+    index index.php index.html;
+
+    location ~ \.php$ {
+        try_files $fastcgi_script_name =404;
+        include fastcgi_params;
+        fastcgi_pass  unix:/run/php/php8.2-fpm.sock;
+        fastcgi_index index.php;
+        fastcgi_param DOCUMENT_ROOT  $realpath_root;
+        fastcgi_param SCRIPT_FILENAME   $realpath_root$fastcgi_script_name; 
+    }
+
+    access_log /var/log/nginx/mail.access.log;
+    error_log /var/log/nginx/mail.error.log;
+}
+
+server {
+        listen 80
+        server_name mail.myapp.com
+
+        return 302 https://$server_name$request_uri;
+}
+```
+
+
+Jika sudah sekarang hanya perlu me-restart **nginx**.
+``` sh
+sudo systemctl restart nginx
+```
+
+Sekarang silahkan buka **https://mail.myapp.com** untuk uji coba.
+
+## Referensi
+- [Mail Server Part 1](https://itkoding.com/cara-membuat-mail-server-postix-di-ubuntu/)
+- [Mail Server Part 2](https://itkoding.com/instalasi-imap-server-dovecot-enkripsi-tls-ubuntu/)
+- [Mail Server Part 3](https://itkoding.com/membuat-spf-dkim-mail-server-ubuntu/)
+- [Mail Server Part 4](https://itkoding.com/membuat-dmarc-record/)
+- [Mail Server Part 5](https://itkoding.com/install-roundcube-webmail-di-ubuntu-server/)
