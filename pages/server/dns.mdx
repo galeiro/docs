@@ -1,1 +1,199 @@
-The module pattern is a great way to split a larger file into **multiple smaller**, **reusable pieces**. It also promotes **code encapsulation**, since the values within modules are kept private inside the module by default, and cannot be modified. Only the values that are explicitly exported with the `export` keyword are accessible to other files.
+import { Callout } from 'nextra-theme-docs'
+
+# Konfigurasi DNS Server
+Pada kali ini kita akan melakukan konfigurasi DNS Server. Sebelum melakukan konfigurasi alangkah baiknya kita harus mengetahui maksud dari apa yang akan kita konfigurasikan.
+
+Jadi kita akan membuat DNS pribadi, seperti contoh **myapp.com** pada local. Jadi contoh teknis kerjanya kita akan men-translate-kan IP local kita **192.168.56.5** menjadi **myapp.com**. 
+
+Berikut adalah konfigurasi DNS pada projek ini:
+
+| Nama Server          | IP Server       | Domain Name         |
+| :------------------: | :-------------: | :-----------------: |
+| DNS Server           | 192.168.56.111  | ns.myapp.com        |
+| Database Server      | 192.168.56.9    | db.myapp.com        |
+| CA Server            | 192.168.56.3    | ca.myapp.com        |
+| FTP Server           | 192.168.56.7    | ftp.myapp.com       |
+| Mail Server          | 192.168.56.11   | mail.myapp.com      |
+| Monitoring Server    | 192.168.56.5    | noc.myapp.com       |
+| Jenkins Server       | 192.168.56.8    | jen.myapp.com       |
+| Loadbalancer Server  | 192.168.56.21   | myapp.com           |
+| App Server           | 192.168.56.15   | web1.myapp.com      |
+| App Server           | 192.168.56.15   | web2.myapp.com      |
+| App Server           | 192.168.56.15   | be.myapp.com        |
+
+<Callout type="info" emoji="ℹ️">
+  Pada **App Server** kita akan membuat server block, yaitu 3 domain yang diarahkan kepada **App Server**.
+</Callout>
+
+
+## Install Bind
+Install **bind9** untuk aplikasi DNS nya.
+``` sh
+sudo apt-get install bind9 bind9utils bind9-doc
+```
+Lalu kita akan menkonfigurasikan agar DNS kita dapat digunakan oleh client kita dan kita akan menkonfigurasikan forwaders untuk melakukan forward DNS yang tidak ada pada server kita ke DNS Public (8.8.8.8). 
+
+Sesuaikan konfigurasi di **/etc/bind/named.conf.options** seperti berikut:
+``` sh filename="sudo nano /etc/bind/named.conf.options"
+options {
+        directory "/var/cache/bind";
+
+        // If there is a firewall between you and nameservers you want
+        // to talk to, you may need to fix the firewall to allow multiple
+        // ports to talk.  See http://www.kb.cert.org/vuls/id/800113
+
+        // If your ISP provided one or more IP addresses for stable
+        // nameservers, you probably want to use them as forwarders.
+        // Uncomment the following block, and insert the addresses replacing
+        // the all-0's placeholder.
+
+        {==forwarders {==}
+           {==8.8.8.8;==}
+        {==};==}
+
+        //========================================================================
+        // If BIND logs error messages about the root key being expired,
+        // you will need to update your keys.  See https://www.isc.org/bind-keys
+        //========================================================================
+        {==dnssec-validation no;==}
+        {==recursion yes;==}          
+        {==allow-recursion { any; };==}
+};
+```
+## Konfigurasi Local Zone
+Kita akan melakukan konfigurasi local zone untuk pendefinisian zona berdasarkan nama domain kita dan IP nya juga. Jika IP Address DNS Server kita adalah **192.168.56.111** maka akan direverse menjadi **56.168.192** ditambah dengan .in-addr.arp. Mengapa angka terakhir dari IP Address tidak ikut direverse? Karena kita akan definisikan nanti.
+
+Sesuaikan konfigurasi di **/etc/bind/named.conf.local** seperti berikut:
+``` sh filename="sudo nano /etc/bind/named.conf.local"
+//
+// Do any local configuration here
+//
+
+// Consider adding the 1918 zones here, if they are not used in your
+// organization
+//include "/etc/bind/zones.rfc1918";
+
+zone {=="myapp.com"==} IN { 
+        type master;
+        file {=="/etc/bind/db.myapp.com"==}; 
+        allow-update { none; };
+};
+
+zone {=="56.168.192.in-addr.arpa"==} IN { 
+     type master;
+     file {=="/etc/bind/db.56.168.192"==}; 
+     allow-update { none; };
+};
+```
+
+Lalu sekarang kita akan membuat file **db.myapp.com** dan **db.56.168.192**.
+``` sh
+sudo touch /etc/bind/db.myapp.com
+```
+``` sh
+sudo touch /etc/bind/db.56.168.192
+```
+
+## Konfigurasi Domain Zone
+
+Kita akan melakukan konfigurasi Domain Zone pada **db.myapp.com** yang telah kita buat tadi. Konfigurasi ini dilakukan agar ketika ada client yang nslookup myapp.com, akan diarahkan ke IP yang benar.
+
+Untuk konfigurasi file pada **/etc/bind/db.myapp.com** seperti berikut:
+``` sh filename="sudo nano /etc/bind/db.myapp.com"
+; BIND data file for local loopback interface
+;
+$TTL    604800
+@       IN      SOA     ns.myapp.com. root.ns.myapp.com. (
+                              3         ; Serial
+                         604800         ; Refresh
+                          86400         ; Retry
+                        2419200         ; Expire
+                         604800 )       ; Negative Cache TTL
+
+;Name Server Information
+@          IN       NS      ns.myapp.com.
+
+;IP address of Name Server
+ns         IN       A       192.168.56.111
+
+;A – Record HostName To Ip Address
+@          IN       A      192.168.56.21
+master     IN       A      192.168.56.2
+ca         IN       A      192.168.56.3
+ftp        IN       A      192.168.56.7
+mail       IN       A      192.168.56.11
+db         IN       A      192.168.56.9
+noc        IN       A      192.168.56.5
+web1       IN       A      192.168.56.15
+web2       IN       A      192.168.56.15
+be         IN       A      192.168.56.15
+jen        IN       A      192.168.56.8
+
+;Mail Exchanger
+myapp.com.   IN     MX   10   mail.myapp.com.
+```
+## Konfigurasi Reverse Zone
+Kita akan melakukan konfigurasi Reverse Zone pada **db.56.168.192** yang telah kita buat tadi. Konfigurasi ini dilakukan agar ketika ada client yang nslookup IP kita, akan diarahkan ke Domain Name yang benar.
+
+Untuk konfigurasi file pada **/etc/bind/db.56.168.192** seperti berikut:
+``` sh filename="sudo nano /etc/bind/db.56.168.192"
+; BIND reverse data file for local loopback interface
+;
+$TTL    604800
+@       IN      SOA     myapp.com. root.myapp.com. (
+                              3         ; Serial
+                         604800         ; Refresh
+                          86400         ; Retry
+                        2419200         ; Expire
+                         604800 )       ; Negative Cache TTL
+;
+;Name Server Information
+@        IN      NS      ns.myapp.com.
+ns       IN      A       192.168.56.111
+
+;Reverse lookup for Name Server
+111      IN      PTR    ns.myapp.com.
+
+;PTR Record IP address to HostName
+2     IN      PTR    master.myapp.com.
+3     IN      PTR    ca.myapp.com.
+7     IN      PTR    ftp.myapp.com.
+11    IN      PTR    mail.myapp.com.
+9     IN      PTR    db.myapp.com.
+5     IN      PTR    noc.myapp.com.
+15    IN      PTR    web1.myapp.com.
+15    IN      PTR    web2.myapp.com.
+15    IN      PTR    be.myapp.com.
+8     IN      PTR    jen.myapp.com.
+21    IN      PTR    myapp.com.
+```
+
+<Callout type="info" emoji="ℹ️">
+  Konfigurasi diatas adalah IP terakhir kita yang mana IP **192.168.56** sudah kita definisikan sebelumnya.
+</Callout>
+
+## Pengujian Service
+
+Jika sudah, maka kita tinggal melakukan restart pada service **bind9** kita.
+``` sh
+sudo systemctl restart bind9
+```
+
+Lalu jangan lupa untuk mengganti DNS Server di laptop/local kita menjadi IP DNS Server (192.168.56.111). Ketika sudah diganti maka langkah terkahir kita hanya perlu tes apakah laptop kita sudah menggunakan DNS Server kita atau belum.
+``` sh
+nslookup ns.myapp.com
+```
+``` sh
+nslookup ns.myapp.com
+```
+
+<Callout type="info" emoji="ℹ️">
+  Hasil seperti berikut:
+  ```sh copy=false
+  Server:  ns.myapp.com
+  Address:  192.168.56.111  
+
+  Name:    ns.myapp.com
+  Address:  192.168.56.111
+  ```
+</Callout>

@@ -1,0 +1,129 @@
+import { Callout } from 'nextra-theme-docs'
+
+# Konfigurasi CA Server
+
+Sekarang kita akan menkonfigurasikan CA Server kita agar server - server kita dapat disimulasikan menggunakan **https** atau **ssl**. Kita dapat menggunakan 2 tools yang biasa digunakan yaitu **certbot** dan **openssl**. Namun certbot hanya bisa digunakan di server VPS yang sudah memiliki domain, jadi kita akan mensimulasikannya dengan openssl.
+
+Pada konfigurasi ini kita akan melakukan konfigurasi seperti penyedia layanan CA Server terlebih dahulu.
+
+## Konfigurasi
+``` sh
+mkdir my-ca && cd my-ca
+```
+``` sh
+touch index.txt
+```
+``` sh
+echo 0000 > serial
+```
+``` sh
+echo 0000 > crl
+```
+``` sh
+sudo cp /etc/ssl/openssl.cnf openssl.cnf
+```
+Lalu cari `[ CA_default ]` dan sesuaikan konfigurasi **openssl.cnf** sesuai dengan dibawah ini:
+``` sh filename="openssl.cnf"
+[ CA_default ]
+
+dir             = /home/ubuntu/my-ca
+certs           = $dir                  
+crl_dir         = $dir                  
+database        = $dir/index.txt        
+#unique_subject = no                    
+                                        
+new_certs_dir   = $dir                  
+
+certificate     = $dir/pub.crt          
+serial          = $dir/serial           
+crlnumber       = $dir/crlnumber        
+                                        
+crl             = $dir/crl.pem          
+private_key     = $dir/pub.key          
+
+x509_extensions = usr_cert              
+```
+
+Lalu cari baris `policy = policy_match` dan ganti menjadi berikut:
+``` sh filename="openssl.cnf"
+policy          = policy_anything             
+```
+
+## Membuat Key CA Server
+Kita akan membuat key CA Server dengan masukkan perintah berikut difolder **my-ca** kita:
+``` sh
+openssl genrsa -out ca.key 4096             
+```
+Jika sudah maka didalam folder **my-ca** akan ada Key CA kita yaitu **ca.key**.
+
+## Membuat Pub CA Server
+Setelah itu kita akan membuat Pub CA Server dengan masukkan perintah berikut:
+``` sh
+openssl req -new -x509 -days 365 -key ca.key -out ca.crt             
+```
+
+<Callout type="info" emoji="ℹ️">
+  Pada **Pertanyaan Request CA** seperti berikut:
+  ``` sh
+  Country Name (2 letter code) [AU]: ID
+  State or Province Name (full name) [Some-State]: Indonesia
+  Locality Name (eg, city) []: Jakarta
+  Organization Name (eg, company) [Internet Widgits Pty Ltd]: My-CA
+  Organizational Unit Name (eg, section) []: My-CA
+  Common Name (e.g. server FQDN or YOUR name) []: My-CA
+  Email Address []: ca@gmail.com
+  ```
+</Callout>
+
+Jika sudah maka didalam folder **my-ca** akan ada Key CA kita yaitu **ca.crt**. Nanti **ca.crt** inilah yang akan kita tanam di browser kita.
+
+## Membuat Key CA Client
+Konfigurasi ini dilakukan di server client. Jadi kita akan membuat Key CA di server client.
+``` shell
+openssl genrsa -out myapp.key 4096
+```
+Jika sudah maka kita tinggal membuat Request Pub CA yang akan dikirimkan ke CA Server untuk ditandatangani atau di validasi.
+
+## Membuat Csr CA Client
+Konfigurasi ini dilakukan di server client. Jadi kita akan membuat permintaan berupa **.csr** yang mana file **.csr** ini akan dikirim ke CA Server untuk proses tanda tangan.
+``` sh
+openssl req -new -key myapp.key -out myapp.csr         
+```
+
+<Callout type="info" emoji="ℹ️">
+  Pada **Pertanyaan Request CA** seperti berikut:
+  ``` sh
+  Country Name (2 letter code) [AU]: ID
+  State or Province Name (full name) [Some-State]: Indonesia
+  Locality Name (eg, city) []: Jakarta
+  Organization Name (eg, company) [Internet Widgits Pty Ltd]: My-CA
+  Organizational Unit Name (eg, section) []: My-CA
+  Common Name (e.g. server FQDN or YOUR name) []: *.myapp.com
+  Email Address []: ca@gmail.com
+  ```
+</Callout>
+
+Jika sudah maka kita akan mengirimkan file **myapp.csr** ke CA Server untuk ditandatangani.
+``` sh
+scp myapp.csr ubuntu@192.168.56.3:/tmp          
+```
+
+## Mentandatangani Csr
+Sekarang kita balik lagi ke CA Server untuk mentandatangani file **.csr** client yang sudah dikirim tadi. Pastikan kita sudah berada didalam folder **my-ca**.
+``` sh
+openssl x509 -req -in /tmp/myapp.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out myapp.crt -days 3650 -sha256 -extfile <(echo "subjectAltName=DNS:myapp.com,DNS:*.myapp.com")
+```
+Jika sudah maka akan ada file Pub CA berupa **myapp.crt** kita akan mengirimkan balik file Pub CA milik client.
+``` sh
+scp myapp.crt ubuntu@192.168.56.9:/tmp
+```
+
+## Summary
+Selesai sudah konfigurasi CA, jadi diasumsikan file-file tersebut harus ada di setiap server yang sudah ditentukan.
+
+| Nama File            | Ada Pada        | Fungsi                                                 |
+| :------------------: | :-------------: | ------------------------------------------------------ |
+| ca.key               | CA Server       | Key dari CA Server                                     |
+| ca.crt               | CA Server       | Diletakan di browser kita                              |
+| myapp.key            | Client Server   | Key untuk konfigurasi SSL di server client             |
+| myapp.crt            | Client Server   | Certificate untuk konfigurasi SSL di server client     |
