@@ -1,0 +1,22 @@
+# Disable Beep Sound
+
+I was looking to find a solution to this problem to
+turn off the beep. Editing `inputrc` did not work. So this solution:
+
+``` sh
+sudo nano /etc/modprobe.d/pcspkr-blacklist.conf
+```
+
+``` sh filename="/etc/modprobe.d/pcspkr-blacklist.conf"
+blacklist pcspkr
+```
+
+``` sh
+sudo depmod -a
+```
+
+``` sh
+sudo update-initramfs -u
+```
+
+Then reboot your laptop.

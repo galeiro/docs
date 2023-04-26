@@ -6,5 +6,9 @@
   "server": {
     "title": "Server",
     "type": "page"
+  },
+  "kali": {
+    "title": "Kali Setup",
+    "type": "page"
   }
 }

@@ -1,0 +1,18 @@
+# Manage Printers
+
+``` sh
+sudo apt-get install cups cups-client "foomatic-db"
+```
+``` sh
+sudo usermod -aG lpadmin galih
+```
+``` sh
+sudo service cups restart
+```
+``` sh
+sudo systemctl enable cups
+```
+
+Last, open **http://127.0.0.1:631/**
+
+
