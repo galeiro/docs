@@ -10,5 +10,9 @@
   "kali": {
     "title": "Kali Setup",
     "type": "page"
+  },
+  "wazuh": {
+    "title": "Wazuh",
+    "type": "page"
   }
 }
