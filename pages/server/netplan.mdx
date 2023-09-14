@@ -1,0 +1,45 @@
+# Netplan sebagai Network Management
+Ubuntu menggunakan **netplan** sebagai network management nya.
+
+Sekarang kita akan konfigurasi netplan agar kita dapat meng-konfigurasi-kan IP Statik di interface kita.
+
+## Konfigurasi Netplan
+Konfigurasi netplan ada pada file **/etc/netplan/00-installer-config.yaml**
+
+``` sh filename="sudo nano /etc/netplan/00-installer-config.yaml"
+# This is the network config written by 'subiquity'
+network:
+  ethernets:
+    enp0s3:
+      dhcp4: true
+      optional: true
+    enp0s8:
+      dhcp4: false
+      addresses: [192.168.56.101/24]
+      nameservers:
+        addresses: [8.8.8.8]
+      routes:
+        - to: default
+          via: 192.168.56.1
+          metric: 100
+      optional: true
+  version: 2
+```
+
+Block **optional** diberikan nilai true agar kita memberitahukan
+kepada sistem bahwa dia tidak perlu menunggu interface kita
+menyala. Jika ini tidak ditambah, nnti nya sistem kita akan 
+lama dalam melakukan booting.
+
+## Apply Konfigurasi
+Setelah dirasa cukup, kita tinggal masukan command berikut
+untuk meng-apply konfigurasi netplan kita.
+```
+sudo netplan apply
+```
+
+Jika sudah tinggal memastikan bahwa konfigurasi kita tereksekusi
+dengan baik.
+```
+ip a
+```
