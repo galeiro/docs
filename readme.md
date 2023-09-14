@@ -1,15 +1,22 @@
-# Nextra Docs Template
-
-This is a template for creating documentation with [Nextra](https://nextra.site).
-
-[**Live Demo →**](https://docs.musex.my.id)
+# Dokumentasi Pribadi
 
 ## Local Development
 
-First, run `pnpm i` to install the dependencies.
+Pertama, jalankan kode berikut untuk menginstall depedensi paket.
+```
+pnpm i
+```
 
-Then, run `pnpm dev` to start the development server and visit localhost:3000.
+Kedua, jalankan kode berikut untuk memulai development.
+```
+pnpm dev
+```
 
-## License
+## Docker Development
 
-This project is licensed under the MIT License.
+Jalankan kode berikut untuk menjalankan container.
+```
+docker compose up && docker compose logs -f
+```
+
+Kemudian, akses http://localhost:3000.
