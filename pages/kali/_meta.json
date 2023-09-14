@@ -4,7 +4,5 @@
       "footer": false
     }
   },
-  "index": "Introduction",
-  "disable-beep": "Disable Beep XFCE",
-  "disable-touchscreen": "Disable Touchscreen"
+  "index": "Introduction"
 }

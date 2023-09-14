@@ -12,6 +12,7 @@
   "sudo-without-password": "Sudo without Password",
   "network-management": "Change Network Management",
   "dns-management": "Change DNS Permanent",
+  "netplan": "Netplan as Network Management",
   "-- Server Configuration": {
     "type": "separator",
     "title": "Server Configuration"
