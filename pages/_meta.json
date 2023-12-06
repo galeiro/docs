@@ -7,8 +7,8 @@
     "title": "Server",
     "type": "page"
   },
-  "kali": {
-    "title": "Kali Setup",
+  "setup": {
+    "title": "My Setup",
     "type": "page"
   },
   "wazuh": {
