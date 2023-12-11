@@ -1,0 +1,73 @@
+import { Callout } from 'nextra-theme-docs'
+
+# Bash Script
+
+## on Power On
+
+``` sh
+sudo nano /etc/systemd/system/example.service
+```
+
+``` sh filename="/etc/systemd/system/example.service" {3,8}
+[Unit] 
+Description=Run script at startup after network becomes reachable
+After=network.target
+
+[Service]
+Type=simple
+RemainAfterExit=yes
+ExecStart=<your-script-path>
+TimeoutStartSec=0
+
+[Install]
+WantedBy=default.target
+```
+
+<Callout type="warning" emoji="⚠️">
+    **After=network.target** run when network becomes reachable
+</Callout>
+
+<Callout type="warning" emoji="⚠️">
+    **After=default.target** run when all systemd service loaded
+</Callout>
+
+<Callout type="warning" emoji="⚠️">
+    **After=getty.target** run when login prompt appears
+</Callout>
+
+``` sh
+sudo systemctl enable example.service
+```
+
+``` sh
+systemctl daemon-reload
+```
+
+## on Power Off
+
+``` sh
+sudo nano /etc/systemd/system/example.service
+```
+
+``` sh filename="/etc/systemd/system/example.service" {8}
+[Unit]
+Description=Backup Core ZSH Terminal
+DefaultDependencies=no
+Before=shutdown.target
+
+[Service]
+Type=oneshot
+ExecStart=<your-script-path>
+TimeoutStartSec=0
+
+[Install]
+WantedBy=shutdown.target
+```
+
+``` sh
+sudo systemctl enable example.service
+```
+
+``` sh
+systemctl daemon-reload
+```
