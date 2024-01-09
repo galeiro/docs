@@ -49,7 +49,7 @@ systemctl daemon-reload
 sudo nano /etc/systemd/system/example.service
 ```
 
-``` sh filename="/etc/systemd/system/example.service" {8}
+``` sh filename="/etc/systemd/system/example.service" {8,10}
 [Unit]
 Description=Backup Core ZSH Terminal
 Wants=network.target
@@ -59,7 +59,7 @@ After=network.target
 Type=oneshot
 RemainAfterExit=yes
 ExecStart=/bin/bash
-ExecStop=<file-backup>
+ExecStop=<file-bash>
 
 [Install]
 WantedBy=multi-user.target
