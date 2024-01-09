@@ -2,7 +2,7 @@ import { Callout } from 'nextra-theme-docs'
 
 # Bash Script
 
-## on Power On
+## on Power On (Experimental)
 
 ``` sh
 sudo nano /etc/systemd/system/example.service
@@ -52,16 +52,17 @@ sudo nano /etc/systemd/system/example.service
 ``` sh filename="/etc/systemd/system/example.service" {8}
 [Unit]
 Description=Backup Core ZSH Terminal
-DefaultDependencies=no
-Before=shutdown.target
+Wants=network.target
+After=network.target
 
 [Service]
 Type=oneshot
-ExecStart=<your-script-path>
-TimeoutStartSec=0
+RemainAfterExit=yes
+ExecStart=/bin/bash
+ExecStop=<file-backup>
 
 [Install]
-WantedBy=shutdown.target
+WantedBy=multi-user.target
 ```
 
 ``` sh
