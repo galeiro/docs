@@ -9,6 +9,18 @@ I use JetBrainsMono and size is 11
 curl -OL https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.tar.xz
 ```
 
+``` sh
+tar -xf JetBrainsMono.tar.xz
+```
+
+``` sh
+mv JetBrainsMono/* /usr/share/fonts
+```
+
+``` sh
+fc-cache -f -v
+```
+
 ## Install Zsh
 
 ``` sh
@@ -51,4 +63,15 @@ git clone https://github.com/zsh-users/zsh-autosuggestions.git $ZSH_CUSTOM/plugi
 git clone https://github.com/zsh-users/zsh-syntax-highlighting.git $ZSH_CUSTOM/plugins/zsh-syntax-highlighting
 ```
 
+## Install fzf plugin
+
+``` sh
+sudo apt install fzf
+```
+
+## Install fzf-tab plugin
+
+``` sh
+git clone https://github.com/Aloxaf/fzf-tab ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/fzf-tab
+```
 
