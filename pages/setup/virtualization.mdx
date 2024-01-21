@@ -1,0 +1,22 @@
+# Virtualization
+
+## Install KVM - Qemu
+```
+sudo apt -y install qemu-kvm libvirt-daemon-system libvirt-daemon virtinst bridge-utils libosinfo-bin
+```
+
+```
+sudo apt -y install virt-manager qemu-system
+```
+
+## Configure
+
+``` sh sh filename="Channel (spice)"
+Type: spicevmc
+Target: com.redhat.spice.0
+```
+
+``` sh sh filename="Channel (spice-webdav)"
+Type: spiceport
+Target: org.spice-space.webdav.0
+```
