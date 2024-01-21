@@ -1,0 +1,20 @@
+# Mount Encrypt Disk
+
+``` sh filename="/etc/fstab"
+# <file system> <mount point> <type> <options> <dump> <pass>
+/dev/mapper/luks_home /home btrfs defaults 0 2
+```
+
+``` sh filename="/etc/crypttab"
+# <target name> <source device> <key file> <options>
+luks_home UUID=<your-uuid-disk> none luks,discard
+```
+
+You can confirm your UUID with:
+```
+blkid
+```
+
+``` sh
+sudo update-initramfs -k all -u
+```
