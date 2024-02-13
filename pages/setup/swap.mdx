@@ -1,0 +1,82 @@
+# Swap On
+
+## Hitung
+
+Hitung kebutuhan swap [disini](https://pickwicksoft.github.io/swapcalc/)
+
+## Membuat Partisi Baru
+
+```
+dd if=/dev/zero of=/swapfile bs=1024 count=39845888
+```
+
+Perhitungan silahkan ikuti **1024 * 512MB = 524288**, sehingga **1024 * 38912MB (38GB) = 39845888**
+
+## Mengamankan Partisi Baru
+
+```
+chown root:root /swapfile
+```
+
+```
+chmod 0600 /swapfile
+```
+
+## Membuat Swap
+
+```
+mkswap /swapfile
+```
+
+```
+swapon /swapfile
+```
+
+## Verifikasi
+
+```
+cat /proc/swaps
+```
+
+## Konfigurasi Hibernasi
+
+### Cari UUID
+```
+findmnt -no UUID -T /swapfile
+```
+
+### Cari physical_offset
+```
+sudo filefrag -v /swapfile
+```
+
+Ambil blok angka pertama pada kolom **physical_offset**
+
+### Konfigurasi Grub
+```
+sudo nano /etc/default/grub
+```
+
+``` sh filename="Cari baris GRUB_CMDLINE_LINUX_DEFAULT"
+GRUB_CMDLINE_LINUX_DEFAULT="quiet resume=UUID={UUID} resume_offset={physical_offset}"
+```
+
+### Update Grub
+```
+sudo update-grub
+```
+
+### Konfigurasi initramfs
+Tambahkan baris berikut pada /etc/initramfs-tools/conf.d/resume. Buatlah jika tidak ada file nya.
+
+``` sh filename="sudo nano /etc/initramfs-tools/conf.d/resume"
+RESUME=UUID={UUID} resume_offset={physical_offset}
+```
+
+### Update initramfs
+
+```
+sudo update-initramfs -c -k all
+```
+
+## Done
